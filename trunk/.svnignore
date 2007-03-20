@@ -1,0 +1,8 @@
+config.log
+config.h
+*.swp
+Makefile
+config.status
+stamp-h
+autom4te.cache
+
