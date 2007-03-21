@@ -14,7 +14,7 @@
 #include "callbacks.h"
 #include "dupa.h"
 
-GtkListStore *list_store;
+GtkListStore *listStore;
 GtkTreeIter iter;
 
 int
@@ -48,9 +48,9 @@ main (int argc, char *argv[])
   gtk_widget_modify_font (timeEntry, style->font_desc);
   gtk_entry_set_text (GTK_ENTRY (timeEntry), "00:00:00.0");
 
-  list_store = gtk_list_store_new (N_COLUMNS, G_TYPE_UINT, G_TYPE_STRING);
+  listStore = gtk_list_store_new (N_COLUMNS, G_TYPE_UINT, G_TYPE_STRING);
   gtk_tree_view_set_model (GTK_TREE_VIEW (history),
-			   GTK_TREE_MODEL (list_store));
+			   GTK_TREE_MODEL (listStore));
 
   GtkCellRenderer *renderer;
 
