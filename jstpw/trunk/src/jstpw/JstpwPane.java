@@ -151,6 +151,7 @@ public class JstpwPane extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
     
     class TimeUpdater implements ActionListener {
+        
         public void actionPerformed(ActionEvent actionEvent) {
             long currentTime = getCurrentTime();
             timeOnStopwatch += currentTime - startTime;
