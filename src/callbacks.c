@@ -15,13 +15,13 @@
 
 void addTimeToHistory ();
 
-extern GtkListStore *list_store;
+extern GtkListStore *listStore;
 extern GtkTreeIter iter;
 
 int timerHandle = -1;
 int timeTicks = 0;
 int startSystemTime = 0;
-int historyPos = 1;
+int positionInHistoryList = 1;
 
 GtkWidget *timeEntry = NULL;
 
@@ -35,7 +35,7 @@ void
 on_startButton_toggled (GtkToggleButton * togglebutton, gpointer user_data) {
     if (gtk_toggle_button_get_active (togglebutton)) {
         timeEntry = lookup_widget (GTK_WIDGET (togglebutton), "timeEntry");
-        timerHandle = g_timeout_add (100, timeout_callback, NULL);
+        timerHandle = g_timeout_add (100, timeoutCallback, NULL);
         startSystemTime = getCurrentTime () - timeTicks;
     } else {
         g_source_remove (timerHandle);
@@ -70,14 +70,14 @@ void
 addTimeToHistory () {
 
     const gchar *text = gtk_entry_get_text (GTK_ENTRY (timeEntry));
-    gtk_list_store_insert (list_store, &iter, 0);
-    gtk_list_store_set (list_store, &iter,
-                        COLUMN_POS, historyPos++,
+    gtk_list_store_insert (listStore, &iter, 0);
+    gtk_list_store_set (listStore, &iter,
+                        COLUMN_POS, positionInHistoryList++,
                         COLUMN_TIME, g_strdup (text), -1);
 }
 
 gint
-timeout_callback (gpointer data) {
+timeoutCallback (gpointer data) {
     static char buffer[50];
 
     int h, m, s, ss;

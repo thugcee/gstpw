@@ -13,7 +13,7 @@ void
 on_stopButton_clicked                  (GtkButton       *button,
                                         gpointer         user_data);
 
-gint timeout_callback (gpointer data);
+gint timeoutCallback (gpointer data);
 int getCurrentTime();
 
 
