@@ -28,6 +28,7 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
     final javax.swing.Timer timer = new javax.swing.Timer(100, updater);
     final DefaultListModel history = new DefaultListModel();
     final TimesTableModel storage = new TimesTableModel();
+    final DumpFrame dumpFrame = new DumpFrame();
     int currentRow = UNSET;
     long timeOnStopwatch;
     long startTime;
@@ -203,7 +204,16 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
     }// </editor-fold>//GEN-END:initComponents
 
     private void dumpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dumpButtonActionPerformed
-        //TODO
+        StringBuilder buff = new StringBuilder();
+        buff.append("<pre>\n");
+        for (Object ro:storage.getDataVector()) {
+            Vector row = (Vector)ro;
+            buff.append("\t").append(formatText((Long)row.get(0))).append("\t")
+                    .append(row.get(1)).append("\n");
+        }
+        buff.append("</pre>\n");
+        dumpFrame.dumpEditorPane.setText(buff.toString());
+        dumpFrame.setVisible(true);
     }//GEN-LAST:event_dumpButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
