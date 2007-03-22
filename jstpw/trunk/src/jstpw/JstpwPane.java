@@ -8,25 +8,40 @@ package jstpw;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Vector;
 import javax.swing.DefaultListModel;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
  * @author  ser
  */
-public class JstpwPane extends javax.swing.JPanel {
+public class JstpwPane extends javax.swing.JPanel implements ListSelectionListener {
+    
+    private final static int UNSET = -1;
     
     final TimeUpdater updater = new TimeUpdater();
     final javax.swing.Timer timer = new javax.swing.Timer(100, updater);
     final DefaultListModel history = new DefaultListModel();
+    final TimesTableModel storage = new TimesTableModel();
+    int currentRow = UNSET;
     long timeOnStopwatch;
     long startTime;
     boolean stopped = true;
-    boolean running = false;
+    
+    public TimesTableModel getModel() {
+        return storage;
+    }
     
     /** Creates new form JstpwPanel */
     public JstpwPane() {
         initComponents();
+        storedTimesTable.setDefaultRenderer(Long.class, new TimeRenderer());
+        storedTimesTable.getSelectionModel().addListSelectionListener(this);
     }
     
     /** This method is called from within the constructor to
@@ -38,36 +53,50 @@ public class JstpwPane extends javax.swing.JPanel {
     private void initComponents() {
         java.awt.GridBagConstraints gridBagConstraints;
 
+        jSplitPane = new javax.swing.JSplitPane();
+        jPanel = new javax.swing.JPanel();
         timeEntry = new javax.swing.JTextField();
         startButton = new javax.swing.JToggleButton();
         stopButton = new javax.swing.JButton();
-        jScrollPane = new javax.swing.JScrollPane();
+        stampButton = new javax.swing.JButton();
+        jScrollPaneH = new javax.swing.JScrollPane();
         historyList = new javax.swing.JList(history);
+        jPanel1 = new javax.swing.JPanel();
+        dumpButton = new javax.swing.JButton();
+        deleteButton = new javax.swing.JButton();
+        jScrollPaneS = new javax.swing.JScrollPane();
+        storedTimesTable = new javax.swing.JTable();
 
-        setLayout(new java.awt.GridBagLayout());
+        setLayout(new java.awt.BorderLayout());
+
+        setBackground(new java.awt.Color(255, 255, 255));
+        jSplitPane.setDividerSize(5);
+        jSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+        jSplitPane.setResizeWeight(0.5);
+        jPanel.setLayout(new java.awt.GridBagLayout());
 
         timeEntry.setBackground(new java.awt.Color(255, 255, 255));
         timeEntry.setEditable(false);
-        timeEntry.setFont(timeEntry.getFont().deriveFont(timeEntry.getFont().getStyle() | java.awt.Font.BOLD, timeEntry.getFont().getSize()+10));
+        timeEntry.setFont(timeEntry.getFont().deriveFont(timeEntry.getFont().getStyle() | java.awt.Font.BOLD, timeEntry.getFont().getSize()+12));
         timeEntry.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         timeEntry.setText("00:00:00.0");
         timeEntry.setName("timeEntry");
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 0;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
-        add(timeEntry, gridBagConstraints);
+        jPanel.add(timeEntry, gridBagConstraints);
 
         startButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/player_play.png")));
         startButton.setToolTipText("Start/Pause");
         startButton.setFocusPainted(false);
         startButton.setName("startButton");
         startButton.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/player_pause.png")));
-        startButton.addItemListener(new java.awt.event.ItemListener() {
-            public void itemStateChanged(java.awt.event.ItemEvent evt) {
-                startButtonItemStateChanged(evt);
+        startButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                startButtonActionPerformed(evt);
             }
         });
 
@@ -75,9 +104,9 @@ public class JstpwPane extends javax.swing.JPanel {
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
-        gridBagConstraints.weightx = 0.5;
-        add(startButton, gridBagConstraints);
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.WEST;
+        gridBagConstraints.weightx = 1.0;
+        jPanel.add(startButton, gridBagConstraints);
 
         stopButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/player_stop.png")));
         stopButton.setToolTipText("Reset counter and store in history list");
@@ -89,66 +118,227 @@ public class JstpwPane extends javax.swing.JPanel {
         });
 
         gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 2;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.EAST;
+        gridBagConstraints.weightx = 1.0;
+        jPanel.add(stopButton, gridBagConstraints);
+
+        stampButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/add.png")));
+        stampButton.setFocusPainted(false);
+        stampButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                stampButtonActionPerformed(evt);
+            }
+        });
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
-        gridBagConstraints.weightx = 0.5;
-        add(stopButton, gridBagConstraints);
+        gridBagConstraints.weightx = 1.0;
+        jPanel.add(stampButton, gridBagConstraints);
 
-        jScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         historyList.setFont(historyList.getFont().deriveFont(historyList.getFont().getStyle() & ~java.awt.Font.BOLD, historyList.getFont().getSize()+4));
-        jScrollPane.setViewportView(historyList);
+        historyList.setForeground(new java.awt.Color(153, 153, 153));
+        jScrollPaneH.setViewportView(historyList);
 
         gridBagConstraints = new java.awt.GridBagConstraints();
         gridBagConstraints.gridx = 0;
         gridBagConstraints.gridy = 2;
-        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridwidth = 3;
         gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
         gridBagConstraints.anchor = java.awt.GridBagConstraints.NORTH;
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 1.0;
-        add(jScrollPane, gridBagConstraints);
+        jPanel.add(jScrollPaneH, gridBagConstraints);
+
+        jSplitPane.setLeftComponent(jPanel);
+
+        jPanel1.setLayout(new java.awt.GridBagLayout());
+
+        dumpButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/mail_new.png")));
+        dumpButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                dumpButtonActionPerformed(evt);
+            }
+        });
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        jPanel1.add(dumpButton, gridBagConstraints);
+
+        deleteButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/edit-delete.png")));
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                deleteButtonActionPerformed(evt);
+            }
+        });
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.weightx = 1.0;
+        jPanel1.add(deleteButton, gridBagConstraints);
+
+        jScrollPaneS.setAutoscrolls(true);
+        storedTimesTable.setForeground(new java.awt.Color(102, 102, 102));
+        storedTimesTable.setModel(getModel());
+        jScrollPaneS.setViewportView(storedTimesTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        jPanel1.add(jScrollPaneS, gridBagConstraints);
+
+        jSplitPane.setBottomComponent(jPanel1);
+
+        add(jSplitPane, java.awt.BorderLayout.CENTER);
 
     }// </editor-fold>//GEN-END:initComponents
 
-    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
-        if (running) {
-            startButton.doClick();
-        }
-        stopped = true;
-    }//GEN-LAST:event_stopButtonActionPerformed
+    private void dumpButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_dumpButtonActionPerformed
+        //TODO
+    }//GEN-LAST:event_dumpButtonActionPerformed
 
-    private void startButtonItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_startButtonItemStateChanged
-        if (evt.getStateChange() == java.awt.event.ItemEvent.DESELECTED) {
-            running = false;
-            timer.stop();
-            storeTimeInHistoryList();
-        } else {
-            running = true;
+    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
+        if (currentRow != UNSET) {
+            int tmpRow = currentRow - 1;
+            storage.getDataVector().remove(currentRow);
+            storage.fireTableRowsDeleted(currentRow, currentRow);
+            if (tmpRow < 0) {
+                tmpRow = 0;
+            }
+            storedTimesTable.getSelectionModel().setSelectionInterval(tmpRow, tmpRow);
+        }
+    }//GEN-LAST:event_deleteButtonActionPerformed
+
+    private void startButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startButtonActionPerformed
+        if (startButton.isSelected()) {
             if (stopped) {
                 stopped = false;
                 timeOnStopwatch = 0;
             }
             startTime = getCurrentTime();
             timer.start();
+        } else {
+            timer.stop();
+            storeTimeInHistoryList();
         }
-    }//GEN-LAST:event_startButtonItemStateChanged
+    }//GEN-LAST:event_startButtonActionPerformed
+
+    private void stampButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stampButtonActionPerformed
+        storage.insertRow(0, new Object[] {timeOnStopwatch, null});
+        storage.fireTableRowsInserted(0,0);
+        storedTimesTable.getSelectionModel().setSelectionInterval(0,0);
+    }//GEN-LAST:event_stampButtonActionPerformed
+
+    private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
+        if (startButton.isSelected()) {
+            startButton.doClick();
+        }
+        stopped = true;
+        storedTimesTable.getSelectionModel().clearSelection();
+    }//GEN-LAST:event_stopButtonActionPerformed
+    
+    public void valueChanged(ListSelectionEvent e) {
+        if (e.getValueIsAdjusting()) return;
+
+        ListSelectionModel lsm = (ListSelectionModel)e.getSource();
+        
+        if (lsm.isSelectionEmpty()) {
+            currentRow = UNSET;
+        } else {
+            int newRow = lsm.getLeadSelectionIndex();
+            if (newRow >= storage.getDataVector().size()) {
+                return;
+            }
+            if (newRow != currentRow) {
+                currentRow = newRow;
+                timeOnStopwatch = (Long)((Vector)storage.getDataVector().get(currentRow)).get(0);
+                timeEntry.setText(formatText(timeOnStopwatch));
+                stopped = false;
+            }
+        }
+    }
     
     private void storeTimeInHistoryList() {
         history.add(0, timeEntry.getText());
     }
+
+    private void storeTimeInStorage() {
+        if (currentRow != UNSET) {
+            Vector row = (Vector)storage.getDataVector().get(currentRow);
+            row.set(0, timeOnStopwatch);
+            storage.fireTableCellUpdated(currentRow,0);
+        }
+    }
+
     private long getCurrentTime() {
         return System.currentTimeMillis() / 100;
     }
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton deleteButton;
+    private javax.swing.JButton dumpButton;
     private javax.swing.JList historyList;
-    private javax.swing.JScrollPane jScrollPane;
+    private javax.swing.JPanel jPanel;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPaneH;
+    private javax.swing.JScrollPane jScrollPaneS;
+    private javax.swing.JSplitPane jSplitPane;
+    private javax.swing.JButton stampButton;
     private javax.swing.JToggleButton startButton;
     private javax.swing.JButton stopButton;
+    private javax.swing.JTable storedTimesTable;
     private javax.swing.JTextField timeEntry;
     // End of variables declaration//GEN-END:variables
+    
+    public static String formatText(long time) {
+        long h;
+        long m;
+        long s;
+        long ss;
+        
+        ss = time % 10;
+        s = time / 10;
+        m = s / 60;
+        s = s % 60;
+        h = m / 60;
+        m = m % 60;
+        
+        return String.format("%02d:%02d:%02d.%d", h, m, s, ss);
+    }
+
+    class TimesTableModel extends DefaultTableModel {
+        
+        Class[] types = new Class [] {
+            java.lang.Long.class,
+            java.lang.String.class
+        };
+        
+        public TimesTableModel() {
+            this.addColumn("Time", new Long[] {0L});
+            this.addColumn("Name", new String[] {"Burek ma sznurek"});
+        }
+        
+        boolean[] canEdit = new boolean [] {
+            false, true
+        };
+        
+        public Class getColumnClass(int columnIndex) {
+            return types [columnIndex];
+        }
+        
+        public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return canEdit [columnIndex];
+        }
+    }
     
     class TimeUpdater implements ActionListener {
         
@@ -157,22 +347,20 @@ public class JstpwPane extends javax.swing.JPanel {
             timeOnStopwatch += currentTime - startTime;
             startTime = currentTime;
             timeEntry.setText(formatText(timeOnStopwatch));
+            storeTimeInStorage();
         }
         
-        public String formatText(long time) {
-            long h;
-            long m;
-            long s;
-            long ss;
-            
-            ss = time % 10;
-            s = time / 10;
-            m = s / 60;
-            s = s % 60;
-            h = m / 60;
-            m = m % 60;
-
-            return String.format("%02d:%02d:%02d.%d", h, m, s, ss);
+    }
+    
+    class TimeRenderer extends DefaultTableCellRenderer {
+        
+        public TimeRenderer() {
+            super();
+        }
+        
+        public void setValue(Object value) {
+            setText(formatText((Long)value));
         }
     }
 }
+

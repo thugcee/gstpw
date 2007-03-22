@@ -23,6 +23,7 @@ public class Main extends Frame {
     public Main() {
         add(new JstpwPane());
         setMinimumSize(new java.awt.Dimension(150, 130));
+        setPreferredSize(new java.awt.Dimension(310, 350));
         addWindowListener (new WindowAdapter() {
             public void windowClosing (WindowEvent event) {
                 System.exit(0);
