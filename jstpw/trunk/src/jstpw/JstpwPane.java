@@ -43,6 +43,7 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         initComponents();
         storedTimesTable.setDefaultRenderer(Long.class, new TimeRenderer());
         storedTimesTable.getSelectionModel().addListSelectionListener(this);
+        storedTimesTable.getColumn(Long.class).getHeaderRenderer();
     }
     
     /** This method is called from within the constructor to
@@ -63,10 +64,10 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         jScrollPaneH = new javax.swing.JScrollPane();
         historyList = new javax.swing.JList(history);
         jPanel1 = new javax.swing.JPanel();
-        dumpButton = new javax.swing.JButton();
-        deleteButton = new javax.swing.JButton();
         jScrollPaneS = new javax.swing.JScrollPane();
         storedTimesTable = new javax.swing.JTable();
+        dumpButton = new javax.swing.JButton();
+        deleteButton = new javax.swing.JButton();
 
         setLayout(new java.awt.BorderLayout());
 
@@ -159,6 +160,22 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
 
         jPanel1.setLayout(new java.awt.GridBagLayout());
 
+        jScrollPaneS.setAutoscrolls(true);
+        storedTimesTable.setForeground(new java.awt.Color(102, 102, 102));
+        storedTimesTable.setModel(getModel());
+        storedTimesTable.setGridColor(new java.awt.Color(204, 204, 204));
+        jScrollPaneS.setViewportView(storedTimesTable);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTH;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 1.0;
+        jPanel1.add(jScrollPaneS, gridBagConstraints);
+
         dumpButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/jstpw/img/mail_new.png")));
         dumpButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -167,6 +184,8 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         });
 
         gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.0;
         jPanel1.add(dumpButton, gridBagConstraints);
@@ -179,23 +198,11 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         });
 
         gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
         gridBagConstraints.fill = java.awt.GridBagConstraints.HORIZONTAL;
         gridBagConstraints.weightx = 1.0;
         jPanel1.add(deleteButton, gridBagConstraints);
-
-        jScrollPaneS.setAutoscrolls(true);
-        storedTimesTable.setForeground(new java.awt.Color(102, 102, 102));
-        storedTimesTable.setModel(getModel());
-        jScrollPaneS.setViewportView(storedTimesTable);
-
-        gridBagConstraints = new java.awt.GridBagConstraints();
-        gridBagConstraints.gridy = 1;
-        gridBagConstraints.gridwidth = 2;
-        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
-        gridBagConstraints.anchor = java.awt.GridBagConstraints.SOUTH;
-        gridBagConstraints.weightx = 1.0;
-        gridBagConstraints.weighty = 1.0;
-        jPanel1.add(jScrollPaneS, gridBagConstraints);
 
         jSplitPane.setBottomComponent(jPanel1);
 
@@ -208,8 +215,9 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         buff.append("<pre>\n");
         for (Object ro:storage.getDataVector()) {
             Vector row = (Vector)ro;
-            buff.append("\t").append(formatText((Long)row.get(0))).append("\t")
-                    .append(row.get(1)).append("\n");
+            String name = row.get(1) == null ? "" : (String)row.get(1);
+            buff.append("\t").append(formatAsTimeText((Long)row.get(0))).append("\t")
+                    .append(name).append("\n");
         }
         buff.append("</pre>\n");
         dumpFrame.dumpEditorPane.setText(buff.toString());
@@ -271,7 +279,7 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
             if (newRow != currentRow) {
                 currentRow = newRow;
                 timeOnStopwatch = (Long)((Vector)storage.getDataVector().get(currentRow)).get(0);
-                timeEntry.setText(formatText(timeOnStopwatch));
+                timeEntry.setText(formatAsTimeText(timeOnStopwatch));
                 stopped = false;
             }
         }
@@ -309,7 +317,7 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
     private javax.swing.JTextField timeEntry;
     // End of variables declaration//GEN-END:variables
     
-    public static String formatText(long time) {
+    public static String formatAsTimeText(long time) {
         long h;
         long m;
         long s;
@@ -333,8 +341,8 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         };
         
         public TimesTableModel() {
-            this.addColumn("Time", new Long[] {0L});
-            this.addColumn("Name", new String[] {"Burek ma sznurek"});
+            this.addColumn("Time");
+            this.addColumn("Name");
         }
         
         boolean[] canEdit = new boolean [] {
@@ -356,7 +364,7 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
             long currentTime = getCurrentTime();
             timeOnStopwatch += currentTime - startTime;
             startTime = currentTime;
-            timeEntry.setText(formatText(timeOnStopwatch));
+            timeEntry.setText(formatAsTimeText(timeOnStopwatch));
             storeTimeInStorage();
         }
         
@@ -369,7 +377,7 @@ public class JstpwPane extends javax.swing.JPanel implements ListSelectionListen
         }
         
         public void setValue(Object value) {
-            setText(formatText((Long)value));
+            setText(formatAsTimeText((Long)value));
         }
     }
 }
